@@ -18,10 +18,10 @@ system_settings_hostname: "{{ inventory_hostname }}"
 #     fqdn: barbossa.tortuga.lokal
 system_settings_hosts_entries: []
 
-# Packages to install additionally (apt), e.g. extra CLI tooling.
+# Packages to install additionally, e.g. extra CLI tooling.
 system_settings_install_packages: []
 
-# Packages to remove (apt), e.g. systemd-resolved when a static resolv.conf is used.
+# Packages to remove, e.g. systemd-resolved when a static resolv.conf is used.
 system_settings_remove_packages: []
 
 # Default DNS server written as the `nameserver` entry into /etc/resolv.conf.

@@ -1,10 +1,12 @@
 ---
+# Debian family path
 - name: Enable locale in locale.gen
   ansible.builtin.lineinfile:
     path: /etc/locale.gen
     regexp: "^# ?{{ system_settings_locale_name | regex_escape() }} UTF-8$"
     line: "{{ system_settings_locale_name }} UTF-8"
   notify: Run locale-gen
+  when: ansible_facts['os_family'] == 'Debian'
 
 - name: Write /etc/default/locale
   ansible.builtin.copy:
@@ -16,6 +18,7 @@
     owner: root
     group: root
     mode: "0644"
+  when: ansible_facts['os_family'] == 'Debian'
 
 - name: Set debconf default environment locale
   ansible.builtin.debconf:
@@ -23,3 +26,21 @@
     question: locales/default_environment_locale
     value: "{{ system_settings_locale_name }}"
     vtype: select
+  when: ansible_facts['os_family'] == 'Debian'
+
+# RedHat family path
+- name: Install locale langpack package via dnf CLI
+  ansible.builtin.command: "dnf install -y glibc-langpack-{{ system_settings_locale_name.split('_')[0] | lower }}"
+  when: ansible_facts['os_family'] == 'RedHat'
+  register: dnf_install_locale
+  changed_when: "'Nothing to do' not in dnf_install_locale.stdout"
+
+- name: Write /etc/locale.conf
+  ansible.builtin.copy:
+    dest: /etc/locale.conf
+    content: |
+      LANG={{ system_settings_locale_name }}
+    owner: root
+    group: root
+    mode: "0644"
+  when: ansible_facts['os_family'] == 'RedHat'

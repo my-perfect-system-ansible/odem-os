@@ -32,12 +32,12 @@ argument_specs:
         type: list
         default: []
         elements: str
-        description: "Additional packages to install (apt)"
+        description: "Additional packages to install"
       system_settings_remove_packages:
         type: list
         default: []
         elements: str
-        description: "Packages to remove (apt), e.g. systemd-resolved"
+        description: "Packages to remove, e.g. systemd-resolved"
       system_settings_dns_server:
         type: str
         default: ""

@@ -1,18 +1,40 @@
 ---
-- name: Install system tools
+- name: Install system tools via package module
   ansible.builtin.package:
     name: "{{ system_settings_install_packages }}"
     state: present
     update_cache: true
   become: true
-  when: system_settings_install_packages | length > 0
+  when:
+    - system_settings_install_packages | length > 0
+    - ansible_facts['os_family'] == 'Debian'
 
-- name: Remove undesired system tools
+- name: Install system tools via dnf CLI
+  ansible.builtin.command: "dnf install -y {{ system_settings_install_packages | join(' ') }}"
+  become: true
+  when:
+    - system_settings_install_packages | length > 0
+    - ansible_facts['os_family'] == 'RedHat'
+  register: dnf_install_tools
+  changed_when: "'Nothing to do' not in dnf_install_tools.stdout"
+
+- name: Remove undesired system tools via package module
   ansible.builtin.package:
     name: "{{ system_settings_remove_packages }}"
     state: absent
   become: true
-  when: system_settings_remove_packages | length > 0
+  when:
+    - system_settings_remove_packages | length > 0
+    - ansible_facts['os_family'] == 'Debian'
+
+- name: Remove undesired system tools via dnf CLI
+  ansible.builtin.command: "dnf remove -y {{ system_settings_remove_packages | join(' ') }}"
+  become: true
+  when:
+    - system_settings_remove_packages | length > 0
+    - ansible_facts['os_family'] == 'RedHat'
+  register: dnf_remove_tools
+  changed_when: "'No packages marked for removal' not in dnf_remove_tools.stdout and 'Nothing to do' not in dnf_remove_tools.stdout"
 
 - name: Write nameserver to resolv.conf
   ansible.builtin.copy:

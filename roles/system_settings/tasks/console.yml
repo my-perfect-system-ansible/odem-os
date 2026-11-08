@@ -3,6 +3,7 @@
   ansible.builtin.package:
     name: console-setup
     state: present
+  when: ansible_facts['os_family'] == 'Debian'
 
 - name: Write /etc/default/console-setup
   ansible.builtin.copy:
@@ -20,9 +21,11 @@
   notify:
     - Reconfigure console-setup
     - Restart console-setup
+  when: ansible_facts['os_family'] == 'Debian'
 
 - name: Enable and start console-setup service
   ansible.builtin.systemd:
     name: console-setup.service
     enabled: true
     state: started
+  when: ansible_facts['os_family'] == 'Debian'

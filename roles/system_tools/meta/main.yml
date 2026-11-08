@@ -8,11 +8,16 @@ galaxy_info:
     - name: Debian
       versions:
         - trixie
+    - name: Fedora
+      versions:
+        - "45"
   galaxy_tags:
     - debian
     - debian13
     - trixie
+    - fedora
     - essentials
     - odem-debian
+    - odem-fedora
 dependencies:
   - role: odem.base.identity

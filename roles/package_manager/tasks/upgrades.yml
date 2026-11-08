@@ -6,6 +6,7 @@
       - apt-listchanges
     state: present
     update_cache: true
+  when: ansible_facts['os_family'] == 'Debian'
 
 - name: Configure unattended-upgrades origins pattern
   ansible.builtin.copy:
@@ -17,6 +18,7 @@
     owner: root
     group: root
     mode: "0644"
+  when: ansible_facts['os_family'] == 'Debian'
 
 - name: Configure apt periodic update and upgrade
   ansible.builtin.copy:
@@ -27,15 +29,31 @@
     owner: root
     group: root
     mode: "0644"
+  when: ansible_facts['os_family'] == 'Debian'
 
 - name: Enable and start unattended-upgrades service
   ansible.builtin.systemd:
     name: unattended-upgrades.service
     enabled: true
     state: started
+  when: ansible_facts['os_family'] == 'Debian'
 
 - name: Enable and start apt-daily-upgrade timer
   ansible.builtin.systemd:
     name: apt-daily-upgrade.timer
     enabled: true
     state: started
+  when: ansible_facts['os_family'] == 'Debian'
+
+- name: Install dnf-automatic package via dnf CLI
+  ansible.builtin.command: dnf install -y dnf-automatic
+  when: ansible_facts['os_family'] == 'RedHat'
+  register: dnf_install_dnf_automatic
+  changed_when: "'Nothing to do' not in dnf_install_dnf_automatic.stdout"
+
+- name: Enable and start dnf-automatic timer
+  ansible.builtin.systemd:
+    name: dnf-automatic.timer
+    enabled: true
+    state: started
+  when: ansible_facts['os_family'] == 'RedHat'

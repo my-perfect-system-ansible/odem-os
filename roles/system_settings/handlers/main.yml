@@ -2,16 +2,20 @@
 - name: Run locale-gen
   ansible.builtin.command: locale-gen
   changed_when: true
+  when: ansible_facts['os_family'] == 'Debian'
 
 - name: Reconfigure keyboard-configuration
   ansible.builtin.command: dpkg-reconfigure -f noninteractive keyboard-configuration
   changed_when: true
+  when: ansible_facts['os_family'] == 'Debian'
 
 - name: Reconfigure console-setup
   ansible.builtin.command: dpkg-reconfigure -f noninteractive console-setup
   changed_when: true
+  when: ansible_facts['os_family'] == 'Debian'
 
 - name: Restart console-setup
   ansible.builtin.systemd:
     name: console-setup.service
     state: restarted
+  when: ansible_facts['os_family'] == 'Debian'

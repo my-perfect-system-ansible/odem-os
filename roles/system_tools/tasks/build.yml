@@ -1,5 +1,5 @@
 ---
-- name: Install build toolchain packages
+- name: Install build toolchain packages (Debian)
   ansible.builtin.package:
     name:
       - gcc
@@ -14,3 +14,10 @@
       - make
       - git
     state: present
+  when: ansible_facts['os_family'] == 'Debian'
+
+- name: Install build toolchain packages (RedHat via dnf CLI)
+  ansible.builtin.command: dnf install -y gcc gdb lldb check flex bison automake just make git
+  when: ansible_facts['os_family'] == 'RedHat'
+  register: dnf_install_build
+  changed_when: "'Nothing to do' not in dnf_install_build.stdout"

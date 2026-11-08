@@ -1,5 +1,5 @@
 ---
-- name: Install core system utilities
+- name: Install core system utilities (Debian)
   ansible.builtin.package:
     name:
       - sudo
@@ -19,8 +19,16 @@
       - firmware-netxen
       - firmware-realtek
     state: present
+  when: ansible_facts['os_family'] == 'Debian'
 
 - name: Run tasksel install standard
   ansible.builtin.shell: |
     DEBIAN_FRONTEND=noninteractive tasksel install standard
   become: true
+  when: ansible_facts['os_family'] == 'Debian'
+
+- name: Install core system utilities (RedHat via dnf CLI)
+  ansible.builtin.command: dnf install -y sudo gnupg2 psmisc rsyslog jq pciutils iputils hostname
+  when: ansible_facts['os_family'] == 'RedHat'
+  register: dnf_install_core
+  changed_when: "'Nothing to do' not in dnf_install_core.stdout"

@@ -1,5 +1,5 @@
 ---
-- name: Install modern file manager alternatives
+- name: Install modern file manager alternatives via package module
   ansible.builtin.package:
     name:
       - bat
@@ -10,3 +10,10 @@
       - ripgrep
       - zoxide
     state: present
+  when: ansible_facts['os_family'] == 'Debian'
+
+- name: Install modern file manager alternatives via dnf CLI
+  ansible.builtin.command: dnf install -y bat eza tree ncdu entr ripgrep zoxide
+  when: ansible_facts['os_family'] == 'RedHat'
+  register: dnf_install_fm
+  changed_when: "'Nothing to do' not in dnf_install_fm.stdout"

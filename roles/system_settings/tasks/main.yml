@@ -10,6 +10,7 @@
 
 - name: Configure console
   ansible.builtin.include_tasks: console.yml
+  when: ansible_facts['os_family'] == 'Debian'
 
 - name: Configure time and timezone
   ansible.builtin.include_tasks: time.yml
