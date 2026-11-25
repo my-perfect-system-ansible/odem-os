@@ -9,7 +9,7 @@ tooling.
 - **namespace**: `odem`
 - **name**: `os`
 - **version**: `0.3.1`
-- **dependencies**: `odem.base`, `ansible.posix`
+- **dependencies**: `odem.users`, `ansible.posix`
 
 See [`galaxy.yml`](galaxy.yml) for the canonical values.
 
@@ -40,7 +40,7 @@ ansible-galaxy collection install odem.os
 
 ## Host prerequisites
 
-Every role in this collection declares `odem.base.identity` as a
+Every role in this collection declares `odem.users.user` as a
 dependency, so the play fails fast if the target host isn't Debian 13.
 
 ## Documentation

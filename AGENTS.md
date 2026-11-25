@@ -8,7 +8,7 @@ upgrades, locale / keyboard / console / timezone, core CLI tooling.
 - **namespace**: `odem`
 - **name**: `os`
 - **version**: `0.3.1`
-- **dependencies**: `odem.base >=0.1.0`, `ansible.posix >=1.0.0`
+- **dependencies**: `odem.users >=0.1.0`, `ansible.posix >=1.0.0`
 
 ## Roles
 
@@ -20,7 +20,7 @@ upgrades, locale / keyboard / console / timezone, core CLI tooling.
 
 ## Defaults (system-wide)
 
-- Every role depends on `odem.base.identity` (Debian 13 only).
+- Every role depends on `odem.users.user` (Debian 13 only).
 - `system_settings` also carries `system_settings_hosts_entries` (custom `/etc/hosts` entries), `system_settings_install_packages` / `system_settings_remove_packages` (apt install/remove lists), and `system_settings_dns_server` (a static `nameserver` written to `/etc/resolv.conf`, replacing any symlink — for hosts where `systemd-resolved` is removed).
 - `system_tools` has 7 sub-area toggles (`archives`, `build`, `core`, `fm`, `net`, `transfer`, `stats`); defaults to all true.
 

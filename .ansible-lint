@@ -25,7 +25,7 @@ skip_list:
   - role-name              # mps.* role names are intentionally namespaced (`mps.<col>.<role>`); this rule expects `role_name`
   - schema[meta]           # argument_specs.yml uses intentionally loose schema (`type: raw`, `type: list` with custom elements)
   - schema[no-runtime]     # same
-  - schema[role-arg-spec]  # intentional schema deviations in identity/users_catalog and elsewhere
+  - schema[role-arg-spec]  # intentional schema deviations in user/user_catalog and elsewhere
   - galaxy[no-changelog]   # we maintain changelog fragments ad-hoc at release time (see AGENTS.md "Recent refactoring notes")
   - galaxy[tags]           # galaxy_info tags include `mps`, `odem-base` etc. which aren't in the upstream allowed list
   - meta-no-tags           # same — we use `odem-base`, `odem-debian` etc. as meta tags
