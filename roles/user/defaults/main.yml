@@ -95,7 +95,7 @@ user_password: "changeme"
 #   terminal_rust: true
 #   terminal_scripts: true
 #   desktop_essentials: true
-#   desktop_wm: true
+#   desktop_lightdm: true
 #   desktop_rofi: true
 #   desktop_qtile: true
 #   desktop_thunar: true
