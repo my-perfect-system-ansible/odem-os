@@ -1,0 +1,54 @@
+---
+namespace: odem
+collection: os
+role: settings
+---
+
+# `odem.os.settings`
+
+Configure hostname, locale, keyboard, console, and timezone
+
+## Default variables
+
+| Variable | Default | Description |
+|---|---|---|
+| `settings_hostname` | `{{ inventory_hostname }}` | System hostname (set via hostname and /etc/hosts) |
+| `settings_hosts_entries` | `[]` | Custom /etc/hosts entries — list of dicts with `ip` (required), `names` (required, one or more), and optional `fqdn` |
+| `settings_install_packages` | `[]` | Additional packages to install (apt) |
+| `settings_remove_packages` | `[]` | Packages to remove (apt), e.g. `systemd-resolved` |
+| `settings_dns_server` | `""` | Default DNS server written as a `nameserver` entry into `/etc/resolv.conf` (empty = skip) |
+| `settings_console_charset` | `UTF-8` | Console character map (CHARMAP) |
+| `settings_console_codeset` | `Lat15` | Console code set (CODESET) |
+| `settings_console_fontface` | `Terminus` | Console font face (FONTFACE) |
+| `settings_console_fontsize` | `8x16` | Console font size (FONTSIZE) |
+| `settings_keyboard_layout` | `de` | Keyboard layout (XKBLAYOUT) |
+| `settings_keyboard_model` | `pc105` | Keyboard model (XKBMODEL) |
+| `settings_keyboard_options` | `compose:menu` | Keyboard options (XKBOPTIONS) |
+| `settings_keyboard_variant` | `nodeadkeys` | Keyboard variant (XKBVARIANT) |
+| `settings_locale_name` | `en_US.UTF-8` | System locale (LANG/LANGUAGE/LC_ALL) |
+| `settings_timezone` | `Europe/Berlin` | System timezone (timedatectl) |
+
+## Dependencies
+
+- `odem.os.user`
+
+## Example usage
+
+```yaml
+- hosts: all
+  roles:
+    - odem.os.settings
+```
+
+## Role metadata
+
+- **Min Ansible version**: `2.16.0`
+- **License**: GPL-3.0-or-later
+- **Platforms**: Debian (trixie)
+- **Tasks file lines**: 12
+
+## Related files
+
+- [`meta/main.yml`](meta/main.yml) — galaxy_info + role dependencies
+- [`meta/argument_specs.yml`](meta/argument_specs.yml) — variable spec (the source of the variable table above)
+- [`defaults/main.yml`](defaults/main.yml) — variable defaults (the source of the default values above)

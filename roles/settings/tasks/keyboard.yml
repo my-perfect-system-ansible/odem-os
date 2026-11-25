@@ -1,0 +1,60 @@
+---
+# Debian family path
+- name: Install keyboard-configuration package
+  ansible.builtin.package:
+    name: keyboard-configuration
+    state: present
+  when: ansible_facts['os_family'] == 'Debian'
+
+- name: Write /etc/default/keyboard
+  ansible.builtin.copy:
+    dest: /etc/default/keyboard
+    content: |
+      XKBMODEL="{{ settings_keyboard_model }}"
+      XKBLAYOUT="{{ settings_keyboard_layout }}"
+      XKBVARIANT="{{ settings_keyboard_variant }}"
+      XKBOPTIONS="{{ settings_keyboard_options }}"
+      BACKSPACE="guess"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Reconfigure keyboard-configuration
+  when: ansible_facts['os_family'] == 'Debian'
+
+# RedHat family path
+- name: Write /etc/vconsole.conf
+  ansible.builtin.copy:
+    dest: /etc/vconsole.conf
+    content: |
+      KEYMAP="{{ settings_keyboard_layout }}"
+    owner: root
+    group: root
+    mode: "0644"
+  when: ansible_facts['os_family'] == 'RedHat'
+
+- name: Ensure /etc/X11/xorg.conf.d exists
+  ansible.builtin.file:
+    path: /etc/X11/xorg.conf.d
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  when: ansible_facts['os_family'] == 'RedHat'
+
+- name: Write X11 keyboard configuration
+  ansible.builtin.copy:
+    dest: /etc/X11/xorg.conf.d/00-keyboard.conf
+    content: |
+      # Managed by odem.os.settings
+      Section "InputClass"
+          Identifier "system-keyboard"
+          MatchIsKeyboard "on"
+          Option "XkbModel" "{{ settings_keyboard_model }}"
+          Option "XkbLayout" "{{ settings_keyboard_layout }}"
+          Option "XkbVariant" "{{ settings_keyboard_variant }}"
+          Option "XkbOptions" "{{ settings_keyboard_options }}"
+      EndSection
+    owner: root
+    group: root
+    mode: "0644"
+  when: ansible_facts['os_family'] == 'RedHat'

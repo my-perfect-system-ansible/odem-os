@@ -1,0 +1,46 @@
+---
+namespace: odem
+collection: os
+role: tools
+---
+
+# `odem.os.tools`
+
+Install essential CLI tools, grouped in configurable categories
+
+## Default variables
+
+| Variable | Default | Description |
+|---|---|---|
+| `tools_enable_archives` | `true` | Install archive tools (zip, unzip, bzip2, attr, dtrx) |
+| `tools_enable_build` | `true` | Install build tools (gcc, gdb, lldb, build-essential, check, flex, bison, automake) |
+| `tools_enable_core` | `true` | Install core system packages (sudo, gnupg, rsyslog, jq, ...) |
+| `tools_enable_fm` | `true` | Install file management CLI tools (bat, eza, tree, ncdu, entr, ripgrep) |
+| `tools_enable_net` | `true` | Install networking tools (net-tools, bind9-dnsutils, tcpdump, nmap, ...) |
+| `tools_enable_stats` | `true` | Install monitoring tools (htop, iftop, sysstat, fio) |
+| `tools_enable_transfer` | `true` | Install transfer tools (curl, wget, rsync) |
+
+## Dependencies
+
+- `odem.os.user`
+
+## Example usage
+
+```yaml
+- hosts: all
+  roles:
+    - odem.os.tools
+```
+
+## Role metadata
+
+- **Min Ansible version**: `2.16.0`
+- **License**: GPL-3.0-or-later
+- **Platforms**: Debian (trixie)
+- **Tasks file lines**: 28
+
+## Related files
+
+- [`meta/main.yml`](meta/main.yml) — galaxy_info + role dependencies
+- [`meta/argument_specs.yml`](meta/argument_specs.yml) — variable spec (the source of the variable table above)
+- [`defaults/main.yml`](defaults/main.yml) — variable defaults (the source of the default values above)

@@ -1,0 +1,32 @@
+---
+- name: Read current system timezone
+  ansible.builtin.command: timedatectl show --property=Timezone --value
+  register: settings_current_timezone
+  changed_when: false
+  check_mode: false
+
+- name: Set system timezone if changed
+  ansible.builtin.command: timedatectl set-timezone {{ settings_timezone }}
+  when: settings_current_timezone.stdout != settings_timezone
+  changed_when: true
+
+- name: Install chrony package via package module
+  ansible.builtin.package:
+    name: chrony
+    state: present
+  when: ansible_facts['os_family'] == 'Debian'
+
+- name: Install chrony package via dnf CLI
+  ansible.builtin.command: dnf install -y chrony
+  when: ansible_facts['os_family'] == 'RedHat'
+  register: dnf_install_chrony
+  changed_when: "'Nothing to do' not in dnf_install_chrony.stdout"
+
+- name: Gather service facts
+  ansible.builtin.service_facts:
+
+- name: Enable and start chrony service
+  ansible.builtin.systemd:
+    name: "{{ 'chronyd.service' if ansible_facts['os_family'] == 'RedHat' else 'chrony.service' }}"
+    enabled: true
+    state: started

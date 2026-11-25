@@ -1,0 +1,44 @@
+---
+settings_hostname: "{{ inventory_hostname }}"
+
+# Custom /etc/hosts entries — list of dicts mapping an IP to one or more
+# hostnames plus an optional FQDN. Each entry becomes a single /etc/hosts line:
+# "<ip>\t<names...> [fqdn]".
+#
+# Example:
+# settings_hosts_entries:
+#   - ip: 10.23.43.10
+#     names:
+#       - blackbeard
+#     fqdn: blackbeard.tortuga.lokal
+#   - ip: 10.23.43.20
+#     names:
+#       - barbossa
+#       - barbossa-alt
+#     fqdn: barbossa.tortuga.lokal
+settings_hosts_entries: []
+
+# Packages to install additionally, e.g. extra CLI tooling.
+settings_install_packages: []
+
+# Packages to remove, e.g. systemd-resolved when a static resolv.conf is used.
+settings_remove_packages: []
+
+# Default DNS server written as the `nameserver` entry into /etc/resolv.conf.
+# Set it when systemd-resolved is disabled (see settings_remove_packages);
+# leave empty to keep resolv.conf untouched.
+settings_dns_server: ""
+
+settings_timezone: "Europe/Berlin"
+
+settings_locale_name: "en_US.UTF-8"
+
+settings_keyboard_model: "pc105"
+settings_keyboard_layout: "de"
+settings_keyboard_variant: "nodeadkeys"
+settings_keyboard_options: "compose:menu"
+
+settings_console_charset: "UTF-8"
+settings_console_codeset: "Lat15"
+settings_console_fontface: "Terminus"
+settings_console_fontsize: "8x16"

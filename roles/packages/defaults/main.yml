@@ -1,0 +1,25 @@
+---
+
+# Feature toggles — naming pattern: <rolename>_enable_<feature>
+
+packages_enable_auto_upgrades: true
+
+packages_enable_repos_main: true
+
+packages_enable_repos_updates: true
+
+packages_enable_repos_backports: true
+
+packages_enable_repos_security: true
+
+packages_enable_components_contrib: true
+
+packages_enable_components_non_free: true
+
+packages_enable_components_non_free_firmware: true
+
+packages_enable_deb_src: true
+
+# Regular configuration
+
+packages_upgrade: dist

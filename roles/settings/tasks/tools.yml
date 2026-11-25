@@ -1,0 +1,48 @@
+---
+- name: Install system tools via package module
+  ansible.builtin.package:
+    name: "{{ settings_install_packages }}"
+    state: present
+    update_cache: true
+  become: true
+  when:
+    - settings_install_packages | length > 0
+    - ansible_facts['os_family'] == 'Debian'
+
+- name: Install system tools via dnf CLI
+  ansible.builtin.command: "dnf install -y {{ settings_install_packages | join(' ') }}"
+  become: true
+  when:
+    - settings_install_packages | length > 0
+    - ansible_facts['os_family'] == 'RedHat'
+  register: dnf_install_tools
+  changed_when: "'Nothing to do' not in dnf_install_tools.stdout"
+
+- name: Remove undesired system tools via package module
+  ansible.builtin.package:
+    name: "{{ settings_remove_packages }}"
+    state: absent
+  become: true
+  when:
+    - settings_remove_packages | length > 0
+    - ansible_facts['os_family'] == 'Debian'
+
+- name: Remove undesired system tools via dnf CLI
+  ansible.builtin.command: "dnf remove -y {{ settings_remove_packages | join(' ') }}"
+  become: true
+  when:
+    - settings_remove_packages | length > 0
+    - ansible_facts['os_family'] == 'RedHat'
+  register: dnf_remove_tools
+  changed_when: "'No packages marked for removal' not in dnf_remove_tools.stdout and 'Nothing to do' not in dnf_remove_tools.stdout"
+
+- name: Write nameserver to resolv.conf
+  ansible.builtin.copy:
+    dest: /etc/resolv.conf
+    content: "nameserver {{ settings_dns_server }}\n"
+    owner: root
+    group: root
+    mode: "0644"
+    follow: false
+  become: true
+  when: settings_dns_server | default('') | length > 0

@@ -1,0 +1,18 @@
+---
+
+# Feature toggles — naming pattern: <rolename>_enable_<feature>
+
+tools_enable_archives: true
+
+tools_enable_build: true
+
+tools_enable_fm: true
+
+tools_enable_core: true
+
+tools_enable_transfer: true
+
+tools_enable_net: true
+
+tools_enable_stats: true
+

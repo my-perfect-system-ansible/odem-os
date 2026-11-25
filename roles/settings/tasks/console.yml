@@ -1,0 +1,31 @@
+---
+- name: Install console-setup package
+  ansible.builtin.package:
+    name: console-setup
+    state: present
+  when: ansible_facts['os_family'] == 'Debian'
+
+- name: Write /etc/default/console-setup
+  ansible.builtin.copy:
+    dest: /etc/default/console-setup
+    content: |
+      ACTIVE_CONSOLES="/dev/tty[1-6]"
+      CHARMAP="{{ settings_console_charset }}"
+      CODESET="{{ settings_console_codeset }}"
+      FONTFACE="{{ settings_console_fontface }}"
+      FONTSIZE="{{ settings_console_fontsize }}"
+      VIDEOMODE=
+    owner: root
+    group: root
+    mode: "0644"
+  notify:
+    - Reconfigure console-setup
+    - Restart console-setup
+  when: ansible_facts['os_family'] == 'Debian'
+
+- name: Enable and start console-setup service
+  ansible.builtin.systemd:
+    name: console-setup.service
+    enabled: true
+    state: started
+  when: ansible_facts['os_family'] == 'Debian'

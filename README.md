@@ -19,7 +19,9 @@ See [`galaxy.yml`](galaxy.yml) for the canonical values.
 
 | Role | Purpose |
 |---|---|
-| [`odem.os.system_tools`](roles/system_tools/README.md) | Apt-by-category groups for archives, build, file-manager, network, transfer, statistics tools. Per-area toggles. |
+| [`odem.os.packages`](roles/packages/README.md) | Configure APT sources (4 pockets × components × deb-src), install base packages, configure unattended-upgrades. |
+| [`odem.os.settings`](roles/settings/README.md) | Configure hostname + `/etc/hosts` (custom entries), locale, keyboard, console, timezone — one tasks file per concern, plus a `tools.yml` sub-step (install/remove packages + static `/etc/resolv.conf` nameserver). |
+| [`odem.os.tools`](roles/tools/README.md) | Apt-by-category groups for archives, build, file-manager, network, transfer, statistics tools. Per-area toggles. |
 | [`odem.os.tweaks`](roles/tweaks/README.md) | Merged system tweaks — zram compressed swap, tmpfs ramdisks with backup/restore, kmscon userspace console. One tasks file per subpart, gated by `tweaks_enable_*` toggles. |
 | [`odem.os.user`](roles/user/README.md) | Merged per-user role — identity resolve protocol (`user_resolved`/`user_present`/`user_absent`/`user_group_names`), ecosystem-wide `user_default_*` globals, groups, accounts (root special path), SSH keys, sudoers, shared group folders. Also ships the `odem_*` filter plugins under `plugins/filter/`. |
 ## Installation
@@ -34,9 +36,9 @@ ansible-galaxy collection install odem.os
 - hosts: all
   become: true
   roles:
-    - odem.os.package_manager
-    - odem.os.system_settings
-    - odem.os.system_tools
+    - odem.os.packages
+    - odem.os.settings
+    - odem.os.tools
 ```
 
 ## Host prerequisites

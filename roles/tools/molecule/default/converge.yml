@@ -1,0 +1,15 @@
+---
+# Minimal converge: invoke the role with default vars + a synthetic user
+# so user-resolved consumers see something without enabling all roles.
+
+- name: Converge
+  hosts: all
+  become: true
+  vars:
+    user_catalog:
+      molecule_user:
+        user_roles: {}
+    user_list:
+      - name: molecule_user
+  roles:
+    - role: odem.os.tools
