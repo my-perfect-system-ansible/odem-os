@@ -1,0 +1,61 @@
+---
+# zram — compressed swap in RAM. Debian: zram-tools + /etc/default/zramswap;
+# RedHat: zram-generator + /etc/systemd/zram-generator.conf.
+
+- name: Install zram packages (Debian)
+  ansible.builtin.package:
+    name: "{{ tweaks_zram_packages }}"
+    state: present
+    update_cache: true
+  become: true
+  when: ansible_facts['os_family'] == 'Debian'
+
+- name: Install zram-generator (RedHat via dnf CLI)
+  ansible.builtin.command: dnf install -y zram-generator
+  when: ansible_facts['os_family'] == 'RedHat'
+  register: dnf_install_zram
+  changed_when: "'Nothing to do' not in dnf_install_zram.stdout"
+  become: true
+
+- name: Configure zram swap device (Debian)
+  ansible.builtin.blockinfile:
+    path: "{{ tweaks_zram_config_path }}"
+    marker: "# {mark} ANSIBLE MANAGED: zramswap config"
+    block: "ALGO={{ tweaks_zram_algo }}\nPERCENT={{ tweaks_zram_percentage }}"
+    insertafter: EOF
+  become: true
+  when: ansible_facts['os_family'] == 'Debian'
+
+- name: Configure zram swap device (RedHat)
+  ansible.builtin.blockinfile:
+    path: /etc/systemd/zram-generator.conf
+    marker: "# {mark} ANSIBLE MANAGED: zram config"
+    block: |
+      [zram0]
+      zram-size = ram / {{ (100 / tweaks_zram_percentage) | int }}
+      compression-algorithm = {{ tweaks_zram_algo }}
+    create: true
+    mode: "0644"
+  become: true
+  when: ansible_facts['os_family'] == 'RedHat'
+
+- name: Restart zram service (Debian)
+  ansible.builtin.systemd:
+    name: "{{ tweaks_zram_service }}"
+    state: restarted
+    daemon_reload: true
+  become: true
+  when: ansible_facts['os_family'] == 'Debian'
+
+- name: Reload systemd daemon for zram-generator (RedHat)
+  ansible.builtin.systemd:
+    daemon_reload: true
+  become: true
+  when: ansible_facts['os_family'] == 'RedHat'
+
+- name: Start zram device (RedHat)
+  ansible.builtin.systemd:
+    name: systemd-zram-setup@zram0.service
+    state: restarted
+  become: true
+  when: ansible_facts['os_family'] == 'RedHat'

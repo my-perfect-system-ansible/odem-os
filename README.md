@@ -1,15 +1,16 @@
 # `odem.os` Ansible Collection
 
-Operating system init + the shared per-user identity model for Debian 13
-(trixie) and Fedora 45: package sources, unattended upgrades, locale /
-keyboard / console / timezone, core CLI tooling — plus users, groups,
-SSH keys, sudoers, group folders (the merged `odem.os.user` role).
+Operating system init + the shared per-user identity model + system tweaks for
+Debian 13 (trixie) and Fedora 45: package sources, unattended upgrades,
+locale / keyboard / console / timezone, core CLI tooling — plus users, groups,
+SSH keys, sudoers, group folders (the merged `odem.os.user` role), and zram /
+tmpfs ramdisks / kmscon (the merged `odem.os.tweaks` role).
 
 ## Galaxy metadata
 
 - **namespace**: `odem`
 - **name**: `os`
-- **version**: `0.4.0`
+- **version**: `0.5.0`
 - **dependencies**: `ansible.posix`
 
 See [`galaxy.yml`](galaxy.yml) for the canonical values.
@@ -19,8 +20,8 @@ See [`galaxy.yml`](galaxy.yml) for the canonical values.
 | Role | Purpose |
 |---|---|
 | [`odem.os.system_tools`](roles/system_tools/README.md) | Apt-by-category groups for archives, build, file-manager, network, transfer, statistics tools. Per-area toggles. |
+| [`odem.os.tweaks`](roles/tweaks/README.md) | Merged system tweaks — zram compressed swap, tmpfs ramdisks with backup/restore, kmscon userspace console. One tasks file per subpart, gated by `tweaks_enable_*` toggles. |
 | [`odem.os.user`](roles/user/README.md) | Merged per-user role — identity resolve protocol (`user_resolved`/`user_present`/`user_absent`/`user_group_names`), ecosystem-wide `user_default_*` globals, groups, accounts (root special path), SSH keys, sudoers, shared group folders. Also ships the `odem_*` filter plugins under `plugins/filter/`. |
-
 ## Installation
 
 ```bash

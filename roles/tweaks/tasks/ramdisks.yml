@@ -1,0 +1,89 @@
+---
+# ramdisks — mount a path as tmpfs with backup/restore. The fstype detection
+# and the conversion (backup → fstab entry → mount → restore) run inline:
+# no facts/convert split, the block is gated by the detected tmpfs state.
+
+- name: Detect filesystem type of tmpfs candidate mount
+  ansible.builtin.command: findmnt -n -o FSTYPE {{ tweaks_ramdisks_mount }}
+  register: tweaks_ramdisks_fstype
+  changed_when: false
+  failed_when: false
+
+- name: Convert mount to tmpfs when needed
+  become: true
+  when: tweaks_ramdisks_fstype.stdout != 'tmpfs'
+  block:
+    - name: Ensure backup dir exists
+      ansible.builtin.file:
+        path: "{{ tweaks_ramdisks_backup_path }}"
+        state: directory
+        mode: "0700"
+
+    - name: Check if backup marker exists
+      ansible.builtin.stat:
+        path: "{{ tweaks_ramdisks_backup_marker }}"
+      register: tweaks_ramdisks_backup_done
+
+    - name: Backup mount contents
+      ansible.builtin.copy:
+        src: "{{ tweaks_ramdisks_mount }}/"
+        dest: "{{ tweaks_ramdisks_backup_path }}/"
+        remote_src: true
+        mode: preserve
+      when: not tweaks_ramdisks_backup_done.stat.exists
+
+    - name: Mark backup as done
+      ansible.builtin.file:
+        path: "{{ tweaks_ramdisks_backup_marker }}"
+        state: touch
+        mode: "0644"
+      when: not tweaks_ramdisks_backup_done.stat.exists
+
+    - name: Unmount mount if mounted
+      ansible.posix.mount:
+        path: "{{ tweaks_ramdisks_mount }}"
+        state: unmounted
+
+    - name: Ensure tmpfs entry in fstab
+      ansible.builtin.blockinfile:
+        path: /etc/fstab
+        marker: "{{ tweaks_ramdisks_fstab_marker }}"
+        block: |
+          # Mount {{ tweaks_ramdisks_mount }} as tmpfs (volatile)
+          tmpfs {{ tweaks_ramdisks_mount }} tmpfs {{ tweaks_ramdisks_opts }} 0 0
+
+    - name: Recreate mount directory
+      ansible.builtin.file:
+        path: "{{ tweaks_ramdisks_mount }}"
+        state: directory
+        owner: root
+        group: root
+        mode: "1777"
+
+    - name: Mount tmpfs
+      ansible.posix.mount:
+        path: "{{ tweaks_ramdisks_mount }}"
+        src: tmpfs
+        fstype: tmpfs
+        opts: "{{ tweaks_ramdisks_opts }}"
+        state: mounted
+
+    - name: Restore backed-up contents
+      ansible.builtin.copy:
+        src: "{{ tweaks_ramdisks_backup_path }}/"
+        dest: "{{ tweaks_ramdisks_mount }}/"
+        remote_src: true
+        mode: preserve
+
+    - name: Ensure correct ownership of restored contents
+      ansible.builtin.file:
+        path: "{{ tweaks_ramdisks_mount }}"
+        state: directory
+        recurse: true
+        owner: root
+        group: root
+
+    - name: Restart systemd-journald
+      ansible.builtin.systemd:
+        name: systemd-journald
+        state: restarted

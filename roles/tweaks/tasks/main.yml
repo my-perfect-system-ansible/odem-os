@@ -1,0 +1,22 @@
+---
+# odem.os.tweaks — system-level performance and console tweaks. Orchestrator.
+#
+#   1. zram.yml     — compressed swap in RAM (gated by tweaks_enable_zram)
+#   2. ramdisks.yml — mount a path as tmpfs with backup/restore (gated by
+#                     tweaks_enable_ramdisks)
+#   3. kmscon.yml   — userspace console (gated by tweaks_enable_kmscon)
+#
+# Merged from the former odem.optimize collection roles zram / ramdisks /
+# kmscon. All subparts are system-wide — no per-user logic.
+
+- name: Configure compressed swap in RAM
+  ansible.builtin.include_tasks: zram.yml
+  when: tweaks_enable_zram
+
+- name: Mount volatile paths as tmpfs
+  ansible.builtin.include_tasks: ramdisks.yml
+  when: tweaks_enable_ramdisks
+
+- name: Install kmscon userspace console
+  ansible.builtin.include_tasks: kmscon.yml
+  when: tweaks_enable_kmscon

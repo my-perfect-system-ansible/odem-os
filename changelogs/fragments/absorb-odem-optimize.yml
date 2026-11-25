@@ -1,0 +1,6 @@
+---
+minor_changes:
+  - move the zram, ramdisks, and kmscon roles here from the deleted odem.optimize collection, merged into the single odem.os.tweaks role (one tasks file per subpart - zram.yml, ramdisks.yml, kmscon.yml - each gated by a tweaks_enable_* toggle)
+  - rename the subpart variables to the tweaks_<subpart>_* prefix - zram_* to tweaks_zram_*, ramdisks_* to tweaks_ramdisks_*, kmscon_* to tweaks_kmscon_*
+breaking_changes:
+  - odem.os.tweaks replaces odem.optimize.{zram,ramdisks,kmscon} - playbook role lines collapse to the single odem.os.tweaks role

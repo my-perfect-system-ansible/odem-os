@@ -1,11 +1,11 @@
 ---
 namespace: odem
 name: os
-version: 0.4.0
+version: 0.5.0
 readme: README.md
 authors:
   - foo <bar@baz.com>
-description: Operating system init and per-user identity model — package management, system settings, core tools, users, groups, SSH keys, sudoers
+description: Operating system init, per-user identity model, and system tweaks — package management, system settings, core tools, users, groups, SSH keys, sudoers, zram, tmpfs ramdisks, kmscon
 license:
   - GPL-3.0-or-later
 tags:

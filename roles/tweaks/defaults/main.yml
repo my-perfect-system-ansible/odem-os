@@ -1,0 +1,46 @@
+---
+# ---------------------------------------------------------------------------
+# Feature toggles — naming pattern: tweaks_enable_<subpart>
+# ---------------------------------------------------------------------------
+tweaks_enable_zram: true
+tweaks_enable_ramdisks: true
+tweaks_enable_kmscon: true
+
+# ---------------------------------------------------------------------------
+# zram — compressed swap in RAM
+# ---------------------------------------------------------------------------
+# Debian: zram-tools + /etc/default/zramswap (ALGO/PERCENT), service zramswap.
+# RedHat: zram-generator + /etc/systemd/zram-generator.conf, unit
+# systemd-zram-setup@zram0.service.
+tweaks_zram_packages:
+  - zram-tools
+tweaks_zram_percentage: 10
+tweaks_zram_config_path: /etc/default/zramswap
+tweaks_zram_service: zramswap
+tweaks_zram_algo: zstd
+
+# ---------------------------------------------------------------------------
+# ramdisks — mount a path as tmpfs with backup/restore
+# ---------------------------------------------------------------------------
+# The conversion is idempotent: existing contents are backed up to
+# tweaks_ramdisks_backup_path (marker file guards against re-backup), the
+# fstab entry is managed via blockinfile, and the contents are restored after
+# the tmpfs mount.
+tweaks_ramdisks_mount: /var/log
+tweaks_ramdisks_opts: "mode=1777,nosuid,nodev"
+tweaks_ramdisks_fstab_marker: "# {mark} ANSIBLE MANAGED: tmpfs {{ tweaks_ramdisks_mount }}"
+tweaks_ramdisks_backup_path: /tmp/var-log-backup
+tweaks_ramdisks_backup_marker: "{{ tweaks_ramdisks_backup_path }}/.backup_done"
+
+# ---------------------------------------------------------------------------
+# kmscon — userspace console
+# ---------------------------------------------------------------------------
+# Debian pulls kmscon + libtsm4 from trixie-backports
+# (tweaks_kmscon_default_release); RedHat installs kmscon via dnf.
+tweaks_kmscon_packages:
+  - kmscon
+  - libtsm4
+tweaks_kmscon_default_release: trixie-backports
+tweaks_kmscon_config_dir: /etc/kmscon
+tweaks_kmscon_conf_src: "{{ role_path }}/files/etc/kmscon/kmscon.conf"
+tweaks_kmscon_conf_dst: "{{ tweaks_kmscon_config_dir }}/kmscon.conf"

@@ -1,0 +1,103 @@
+---
+argument_specs:
+  main:
+    short_description: System tweaks — zram, tmpfs ramdisks, kmscon console
+    description:
+      - Merged role — the former C(odem.optimize.zram), C(odem.optimize.ramdisks),
+        and C(odem.optimize.kmscon) roles.
+      - Each subpart is gated by its own C(tweaks_enable_*) toggle (default true).
+      - All subparts are system-wide — no per-user logic.
+    options:
+      tweaks_enable_zram:
+        type: bool
+        required: false
+        default: true
+        description: Toggle for the zram subpart (tasks/zram.yml).
+      tweaks_enable_ramdisks:
+        type: bool
+        required: false
+        default: true
+        description: Toggle for the ramdisks subpart (tasks/ramdisks.yml).
+      tweaks_enable_kmscon:
+        type: bool
+        required: false
+        default: true
+        description: Toggle for the kmscon subpart (tasks/kmscon.yml).
+      tweaks_zram_packages:
+        type: list
+        required: false
+        default:
+          - zram-tools
+        description: "Packages required for zram swap (zram-tools on Debian; RedHat installs zram-generator via dnf)"
+      tweaks_zram_percentage:
+        type: int
+        required: false
+        default: 10
+        description: Percentage of total RAM to use for zram swap
+      tweaks_zram_config_path:
+        type: str
+        required: false
+        default: /etc/default/zramswap
+        description: Path to the zramswap configuration file (Debian only)
+      tweaks_zram_service:
+        type: str
+        required: false
+        default: zramswap
+        description: systemd service name for zramswap (Debian only)
+      tweaks_zram_algo:
+        type: str
+        required: false
+        default: zstd
+        description: Compression algorithm for zram (e.g. zstd, lz4, lzo)
+      tweaks_ramdisks_mount:
+        type: str
+        required: false
+        default: /var/log
+        description: Absolute path to mount as tmpfs
+      tweaks_ramdisks_opts:
+        type: str
+        required: false
+        default: "mode=1777,nosuid,nodev"
+        description: Mount options for the tmpfs entry
+      tweaks_ramdisks_fstab_marker:
+        type: str
+        required: false
+        default: "# {mark} ANSIBLE MANAGED: tmpfs {{ tweaks_ramdisks_mount }}"
+        description: blockinfile marker for the fstab entry
+      tweaks_ramdisks_backup_path:
+        type: str
+        required: false
+        default: /tmp/var-log-backup
+        description: Where to back up existing contents before mounting tmpfs
+      tweaks_ramdisks_backup_marker:
+        type: str
+        required: false
+        default: "{{ tweaks_ramdisks_backup_path }}/.backup_done"
+        description: Marker file under tweaks_ramdisks_backup_path; its presence indicates backup completed
+      tweaks_kmscon_packages:
+        type: list
+        required: false
+        default:
+          - kmscon
+          - libtsm4
+        description: "Packages required for kmscon (backports on Debian)"
+      tweaks_kmscon_default_release:
+        type: str
+        required: false
+        default: trixie-backports
+        description: apt target release to use for kmscon packages (Debian only)
+      tweaks_kmscon_config_dir:
+        type: str
+        required: false
+        default: /etc/kmscon
+        description: Directory where the kmscon config file is deployed
+      tweaks_kmscon_conf_src:
+        type: str
+        required: false
+        default: "{{ role_path }}/files/etc/kmscon/kmscon.conf"
+        description: Source path for the kmscon config file (role-relative)
+      tweaks_kmscon_conf_dst:
+        type: str
+        required: false
+        default: "{{ tweaks_kmscon_config_dir }}/kmscon.conf"
+        description: Destination path for the kmscon config file
