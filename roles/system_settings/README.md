@@ -30,7 +30,7 @@ Configure hostname, locale, keyboard, console, and timezone
 
 ## Dependencies
 
-- `odem.users.user`
+- `odem.os.user`
 
 ## Example usage
 

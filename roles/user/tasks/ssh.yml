@@ -1,0 +1,43 @@
+---
+# Per-user SSH — ~/.ssh directory, private/public key files, authorized_keys.
+# No add/facts split: authorized_keys content is rendered inline per task from
+# each entity's own entries (inline content or lookup('file', path)), so no
+# cross-entity accumulator fact is needed.
+
+- name: Ensure per-user .ssh directory exists
+  ansible.builtin.file:
+    path: "{{ entity.home | default('/home/' ~ entity.name) }}/.ssh"
+    state: directory
+    owner: "{{ entity.name }}"
+    group: "{{ entity.group | default(entity.name) }}"
+    mode: "0700"
+  loop: "{{ user_present }}"
+  loop_control:
+    label: "{{ entity.name }}"
+    loop_var: entity
+
+- name: Deploy per-user SSH private/public keys
+  ansible.builtin.copy:
+    dest: "{{ entity.0.home | default('/home/' ~ entity.0.name) }}/.ssh/{{ entity.1.name }}"
+    content: "{{ entity.1.content if entity.1.content is defined else lookup('file', entity.1.path) }}"
+    owner: "{{ entity.0.name }}"
+    group: "{{ entity.0.group | default(entity.0.name) }}"
+    mode: "0600"
+  loop: "{{ user_present | subelements('ssh_keys', skip_missing=True) }}"
+  loop_control:
+    loop_var: entity
+
+- name: Deploy per-user authorized_keys
+  ansible.builtin.copy:
+    dest: "{{ entity.home | default('/home/' ~ entity.name) }}/.ssh/authorized_keys"
+    content: |
+      {% for key in entity.authorized_keys %}{{ key.content if key.content is defined else lookup('file', key.path) }}
+      {% endfor %}
+    owner: "{{ entity.name }}"
+    group: "{{ entity.group | default(entity.name) }}"
+    mode: "0600"
+  when: entity.authorized_keys | default([]) | length > 0
+  loop: "{{ user_present }}"
+  loop_control:
+    label: "{{ entity.name }}"
+    loop_var: entity

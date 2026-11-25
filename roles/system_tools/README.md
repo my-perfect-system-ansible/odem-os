@@ -22,7 +22,7 @@ Install essential CLI tools, grouped in configurable categories
 
 ## Dependencies
 
-- `odem.users.user`
+- `odem.os.user`
 
 ## Example usage
 

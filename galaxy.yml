@@ -1,11 +1,11 @@
 ---
 namespace: odem
 name: os
-version: 0.3.2
+version: 0.4.0
 readme: README.md
 authors:
   - foo <bar@baz.com>
-description: Operating system initialization — package management, system settings, core tools
+description: Operating system init and per-user identity model — package management, system settings, core tools, users, groups, SSH keys, sudoers
 license:
   - GPL-3.0-or-later
 tags:
@@ -28,5 +28,4 @@ build_ignore:
   - "*.tar.gz"
   - .ansible
 dependencies:
-  odem.users: ">=0.1.0"
   ansible.posix: ">=1.0.0"

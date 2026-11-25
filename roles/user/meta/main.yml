@@ -1,0 +1,25 @@
+---
+galaxy_info:
+  author: foo <bar@baz.com>
+  description: "Manage users, groups, SSH keys, sudoers, the shared identity model, and group folders"
+  min_ansible_version: "2.16.0"
+  license: GPL-3.0-or-later
+  platforms:
+    - name: Debian
+      versions:
+        - trixie
+    - name: Fedora
+      versions:
+        - "45"
+  galaxy_tags:
+    - debian
+    - debian13
+    - trixie
+    - fedora
+    - users
+    - groups
+    - ssh
+    - sudo
+    - accounts
+    - odem-os
+dependencies: []

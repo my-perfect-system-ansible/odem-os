@@ -1,0 +1,204 @@
+---
+argument_specs:
+  main:
+    short_description: Manage users, groups, SSH keys, sudoers, the shared identity model, and group folders
+    description:
+      - Merged per-user role — the former odem.base.identity anchor role plus the
+        former odem.users.users/groups/ssh/sudo roles.
+      - Fails fast on unsupported platform families (Debian, RedHat).
+      - Carries the ecosystem-wide global defaults (user_default_*) that every
+        dependent role can reference.
+      - Resolves users from user_catalog + user_list into a unified structure and
+        produces the user_resolved, user_present, user_absent, user_group_names facts.
+      - Manages groups (explicit user_groups_list + groups extracted from present users),
+        user accounts (including the root special path via chpasswd/chsh/chfn/chage or
+        usermod on RedHat), per-user SSH keys and authorized_keys, per-user sudoers
+        with a shared Cmnd_Alias macros file, and shared group folders with setgid
+        group inheritance.
+      - Declared as a meta dependency by every per-user role in the odem.* ecosystem.
+      - Callers pass user_catalog and user_list as role vars; they flow through the
+        play scope to this role via the dependency chain.
+    options:
+      user_default_repo_dir:
+        type: str
+        required: false
+        default: /srv/repo
+        description: Base directory for cloned repositories
+      user_default_repo_dir_mps:
+        type: str
+        required: false
+        default: /srv/repo/github/my-perfect-system/mps
+        description: Base directory for cloned my-perfect-system repositories
+      user_default_file_mode:
+        type: str
+        required: false
+        default: "0600"
+        description: Default file mode
+      user_default_dir_mode:
+        type: str
+        required: false
+        default: "0700"
+        description: Default directory mode
+      user_default_script_mode:
+        type: str
+        required: false
+        default: "0700"
+        description: Default script mode
+      user_default_owner:
+        type: str
+        required: false
+        default: root
+        description: Default file owner
+      user_default_group:
+        type: str
+        required: false
+        default: root
+        description: Default file group
+      user_default_suid_mode:
+        type: str
+        required: false
+        default: "2770"
+        description: Default setuid mode
+      user_enable_group_folders:
+        type: bool
+        required: false
+        default: true
+        description:
+          - Toggle for the shared group folders sub-step. When true, the paths
+            in user_group_folders are created and their groups ensured.
+      user_group_folders:
+        type: list
+        required: false
+        default: []
+        elements: dict
+        description:
+          - Shared group folders. Each entry creates a directory owned by
+            user_default_owner with the entry's group and the setgid mode,
+            so that new subfolders inherit the group.
+        options:
+          path:
+            type: str
+            required: true
+            description: Directory path to create.
+          group:
+            type: str
+            required: true
+            description: Group that owns the folder. Ensured present if missing.
+          mode:
+            type: str
+            required: false
+            description: >-
+              Directory mode override. Defaults to user_group_folders_mode
+              (2770 — setgid + rwxrwx---).
+      user_group_folders_mode:
+        type: str
+        required: false
+        default: "2770"
+        description: >-
+          Default directory mode for the shared group folders — 2770 = setgid
+          bit so new subfolders inherit the group, plus rwxrwx---.
+      user_catalog:
+        type: dict
+        required: false
+        default: {}
+        description:
+          - Identity catalog keyed by a free-form unique id. Keys are NOT validated against
+            a fixed set; they are only used to reference entries from user_list.
+          - The real OS username is taken from each entry's name field. If name is omitted,
+            it defaults to the catalog key (the unique id).
+          - Each value is a dict describing a single user entity. The top-level keys are
+            arbitrary identifiers, so per-entity field validation cannot be expressed via
+            argument_spec options (Ansible's dict+options validates the dict keys, not the
+            values). The supported per-entity schema is documented here for reference.
+          - 'Per-entity supported fields:'
+          - 'name (str)         — OS username. Defaults to the catalog key when omitted.'
+          - 'uid (int)          — Numeric UID. Omit to let the OS pick.'
+          - 'group (str)        — Primary group name. Created automatically if not present.'
+          - 'groups (list[str]) — Supplementary group memberships to add to the user.'
+          - 'append_groups (bool) — When true, append to existing group memberships; when false, replace.'
+          - 'comment (str)      — GECOS field (human-readable name / description).'
+          - 'shell (str)         — Login shell (absolute path).'
+          - 'home (str)          — Home directory path.'
+          - 'create_home (bool) — Whether to create the home directory.'
+          - 'system (bool)      — Create as a system account (UID below SYS_UID_MAX).'
+          - 'expires (float)    — Account expiry epoch. Use -1 to disable expiry.'
+          - 'password (str)     — Plaintext password. If empty, a random password is generated.
+            This role hashes it with sha512 before passing to the user module.'
+          - 'ssh_keys (list[dict]) — Per-user SSH private/public key files to deploy to ~/.ssh/.
+            Each entry supports: name (str), content (str, optional), path (str, optional).'
+          - 'authorized_keys (list[dict]) — Public keys to concatenate into ~/.ssh/authorized_keys.
+            Each entry supports: content (str, optional), path (str, optional).'
+          - 'sudo (dict)        — Sudoers configuration for this user. Supported keys:
+            nopasswd (bool), group (bool), macros (list[str] — references user_sudo_macros).'
+          - 'user_roles (dict)  — Per-user role opt-in flags. Each key is a `<collection>_<role>`
+            flag (e.g. terminal_bash, desktop_qtile, development_opencode). Per-user roles
+            filter user_resolved by these flags. Reference user_roles_default /
+            user_roles_minimal from defaults to opt into a standard role set.'
+      user_list:
+        type: list
+        required: false
+        default: []
+        description:
+          - Assignment list. Each entry references a user_catalog key via name and sets state.
+          - No other fields are read from user_list entries; all identity comes from the catalog.
+        elements: dict
+        options:
+          name:
+            type: str
+            required: true
+            description:
+              - Unique id of the user. Must match a key in user_catalog.
+              - The actual OS username is read from the catalog entry's name field (defaulting to this id).
+          state:
+            type: str
+            choices: [present, absent]
+            default: present
+            description: Whether the user should exist on this host.
+      user_groups_list:
+        type: list
+        required: false
+        default: []
+        elements: dict
+        description: Explicit list of group dicts to manage, merged with the groups
+          extracted from present users when user_enable_group_extraction is true.
+        options:
+          name:
+            type: str
+            required: true
+            description: Group name.
+          state:
+            type: str
+            choices:
+            - present
+            - absent
+            default: present
+            description: Whether the group should exist.
+          gid:
+            type: int
+            description: Numeric GID.
+          system:
+            type: bool
+            description: Create as system group.
+      user_enable_group_extraction:
+        type: bool
+        required: false
+        default: true
+        description: When true, scan resolved users and extract each user's C(group)
+          and C(groups) fields as groups to ensure-present.
+      user_enable_print_passwords_plaintext:
+        type: bool
+        required: false
+        default: false
+        description: Print generated passwords and hashes to stdout (debug only).
+      user_sudo_macros:
+        type: dict
+        required: false
+        description: Mapping of macro names (referenced from C(sudo.macros) per user)
+          to lists of command patterns rendered as Cmnd_Alias entries into the shared
+          macros file.
+      user_sudo_macros_file:
+        type: str
+        required: false
+        default: /etc/sudoers.d/00_macros
+        description: Path of the shared Cmnd_Alias macros file referenced by every
+          per-user sudoers file.

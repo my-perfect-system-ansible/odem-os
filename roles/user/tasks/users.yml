@@ -1,0 +1,205 @@
+---
+# User accounts — password resolution, the root special path, account
+# create/remove. No add/del/facts split: the password map replaces
+# user_present in place (all other catalog fields are preserved by the
+# combine), so ssh.yml and sudo.yml running after this file see the
+# augmented records.
+
+- name: Build password map for present users
+  ansible.builtin.set_fact:
+    user_with_passwords: "{{ user_with_passwords | default([]) + [user_with_pw] }}"
+  vars:
+    generated_pw: >-
+      {{ (item.password if (item.password is defined and item.password | length > 0)
+         else lookup('password', '/dev/null length=16 chars=ascii_letters,digits,punctuation')) | trim }}
+    user_with_pw: >-
+      {{
+        item | combine({
+          'password_plain': generated_pw,
+          'password_explicit': (item.password is defined and item.password | length > 0),
+          'password_hash': (
+            generated_pw if generated_pw.startswith('$6$')
+            else generated_pw | password_hash('sha512', item.name | hash('sha256') | truncate(16, true, ''))
+          )
+        })
+      }}
+  loop: "{{ user_present }}"
+  loop_control:
+    label: "{{ item.name }}"
+
+- name: Replace user_present with password-bearing records
+  ansible.builtin.set_fact:
+    user_present: "{{ user_with_passwords | default([]) }}"
+
+- name: Debug user passwords when explicitly enabled
+  ansible.builtin.debug:
+    msg: |
+      User {{ entity.name }}
+        Original  : '{{ entity.password }}'
+        Plaintext : '{{ entity.password_plain }}'
+        Hash      : '{{ entity.password_hash }}'
+  loop: "{{ user_with_passwords }}"
+  when: user_enable_print_passwords_plaintext
+  loop_control:
+    label: "{{ entity.name }}"
+    loop_var: entity
+
+# Root requires special handling: on Debian, usermod refuses to modify root
+# because root is always running PID 1 ("usermod: user root is currently used
+# by process 1") — apply root's attributes via chpasswd/chsh/chfn/chage instead.
+# On Fedora 45+, chfn/chsh were removed from shadow-utils — use usermod -c/-s
+# there (Fedora's usermod permits modifying root). chpasswd/chage work on both.
+# Each change is only applied when the current state differs (idempotent).
+
+- name: Apply root special-path changes
+  when: user_present | selectattr('name', 'equalto', 'root') | list | length > 0
+  block:
+    - name: Read root passwd entry
+      ansible.builtin.command: getent passwd root
+      register: user_root_passwd
+      changed_when: false
+      check_mode: false
+
+    - name: Read root shadow entry
+      ansible.builtin.command: getent shadow root
+      register: user_root_shadow
+      changed_when: false
+      check_mode: false
+      no_log: true
+
+    - name: Set root password if changed
+      ansible.builtin.command:
+        cmd: chpasswd -e
+        stdin: "root:{{ entity.password_hash }}"
+      loop: "{{ user_present | selectattr('name', 'equalto', 'root') | list }}"
+      when:
+        - entity.password_explicit | default(false)
+        - user_root_shadow.stdout.split(':')[1] != entity.password_hash
+      no_log: true
+      changed_when: true
+      loop_control:
+        label: "{{ entity.name }}"
+        loop_var: entity
+
+    - name: Set root shell if changed (Debian)
+      ansible.builtin.command:
+        argv:
+          - chsh
+          - -s
+          - "{{ entity.shell }}"
+          - root
+      loop: "{{ user_present | selectattr('name', 'equalto', 'root') | list }}"
+      when:
+        - entity.shell is defined
+        - user_root_passwd.stdout.split(':')[6] != entity.shell
+        - ansible_facts['os_family'] == 'Debian'
+      changed_when: true
+      loop_control:
+        label: "{{ entity.name }}"
+        loop_var: entity
+
+    - name: Set root shell if changed (RedHat)
+      ansible.builtin.command:
+        argv:
+          - usermod
+          - -s
+          - "{{ entity.shell }}"
+          - root
+      loop: "{{ user_present | selectattr('name', 'equalto', 'root') | list }}"
+      when:
+        - entity.shell is defined
+        - user_root_passwd.stdout.split(':')[6] != entity.shell
+        - ansible_facts['os_family'] == 'RedHat'
+      changed_when: true
+      loop_control:
+        label: "{{ entity.name }}"
+        loop_var: entity
+
+    - name: Set root gecos comment if changed (Debian)
+      ansible.builtin.command:
+        argv:
+          - chfn
+          - -f
+          - "{{ entity.comment }}"
+          - root
+      loop: "{{ user_present | selectattr('name', 'equalto', 'root') | list }}"
+      when:
+        - entity.comment is defined
+        - user_root_passwd.stdout.split(':')[4].split(',')[0] != entity.comment
+        - ansible_facts['os_family'] == 'Debian'
+      changed_when: true
+      loop_control:
+        label: "{{ entity.name }}"
+        loop_var: entity
+
+    - name: Set root gecos comment if changed (RedHat)
+      ansible.builtin.command:
+        argv:
+          - usermod
+          - -c
+          - "{{ entity.comment }}"
+          - root
+      loop: "{{ user_present | selectattr('name', 'equalto', 'root') | list }}"
+      when:
+        - entity.comment is defined
+        - user_root_passwd.stdout.split(':')[4].split(',')[0] != entity.comment
+        - ansible_facts['os_family'] == 'RedHat'
+      changed_when: true
+      loop_control:
+        label: "{{ entity.name }}"
+        loop_var: entity
+
+    - name: Set root account expiration if changed
+      ansible.builtin.command:
+        argv:
+          - chage
+          - -E
+          - "{{ entity.expires if (entity.expires is defined and entity.expires | int >= 0) else -1 }}"
+          - root
+      loop: "{{ user_present | selectattr('name', 'equalto', 'root') | list }}"
+      when:
+        - entity.expires is defined
+        - (entity.expires | int >= 0) or (user_root_shadow.stdout.split(':')[7] | default('')) not in ['', '0']
+      changed_when: true
+      loop_control:
+        label: "{{ entity.name }}"
+        loop_var: entity
+
+- name: Create non-root users
+  ansible.builtin.user:
+    name: "{{ entity.name }}"
+    uid: "{{ entity.uid | default(omit) }}"
+    group: "{{ entity.group | default(omit) }}"
+    groups: "{{ entity.groups | default(omit) }}"
+    append: "{{ entity.append_groups | default(omit) }}"
+    comment: "{{ entity.comment | default(omit) }}"
+    shell: "{{ entity.shell | default(omit) }}"
+    home: "{{ entity.home | default(omit) }}"
+    create_home: "{{ entity.create_home | default(omit) }}"
+    system: "{{ entity.system | default(omit) }}"
+    expires: "{{ entity.expires | default(omit) }}"
+    password: "{{ entity.password_hash }}"
+    update_password: "{{ 'always' if entity.password_explicit else 'on_create' }}"
+    state: "{{ entity.state | default('present') }}"
+  loop: "{{ user_present | rejectattr('name', 'equalto', 'root') | list }}"
+  loop_control:
+    label: "{{ entity.name }}"
+    loop_var: entity
+
+- name: Remove users marked absent
+  ansible.builtin.user:
+    name: "{{ item.name }}"
+    state: "absent"
+    remove: true
+    force: true
+  loop: "{{ user_absent }}"
+  loop_control:
+    label: "{{ item.name }}"
+
+- name: Remove home directories of absent users
+  ansible.builtin.file:
+    path: "{{ item.home | default('/home/' ~ item.name) }}"
+    state: absent
+  loop: "{{ user_absent }}"
+  loop_control:
+    label: "{{ item.name }}"

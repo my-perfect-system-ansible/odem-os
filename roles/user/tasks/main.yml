@@ -1,0 +1,41 @@
+---
+# odem.os.user — merged per-user role. Orchestrator.
+#
+#   0. Fails fast if the target host is not a supported platform family
+#   1. identity.yml  — validates user_list against user_catalog and resolves
+#      the user_resolved / user_present / user_absent / user_group_names facts
+#   2. folders.yml    — shared group folders with setgid group inheritance
+#      (opt-in via user_enable_group_folders + user_group_folders)
+#   3. groups.yml     — explicit user_groups_list + groups extracted from users
+#   4. users.yml      — create present / remove absent accounts (root special path)
+#   5. ssh.yml        — per-user ~/.ssh, private keys, authorized_keys
+#   6. sudo.yml       — shared Cmnd_Alias macros + per-user sudoers files
+#
+# Per-user roles in other collections depend on this role; they filter
+# user_resolved by their own user_roles.<key> flag inline.
+
+- name: Assert supported target platform
+  ansible.builtin.assert:
+    that:
+      - ansible_facts['os_family'] in ['Debian', 'RedHat']
+    fail_msg: "This role supports Debian and RedHat family distributions only"
+    quiet: true
+
+- name: Resolve identity users protocol
+  ansible.builtin.include_tasks: identity.yml
+
+- name: Configure shared group folders
+  ansible.builtin.include_tasks: folders.yml
+  when: user_enable_group_folders
+
+- name: Manage groups
+  ansible.builtin.include_tasks: groups.yml
+
+- name: Manage user accounts
+  ansible.builtin.include_tasks: users.yml
+
+- name: Deploy per-user SSH keys
+  ansible.builtin.include_tasks: ssh.yml
+
+- name: Manage per-user sudoers
+  ansible.builtin.include_tasks: sudo.yml

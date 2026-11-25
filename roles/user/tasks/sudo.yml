@@ -1,0 +1,86 @@
+---
+# Per-user sudoers — validation, the shared Cmnd_Alias macros file, per-user
+# rules, admin-group membership, and cleanup of absent users' files.
+# No add/del split: the per-user rule tasks loop user_present, the cleanup
+# task loops user_absent.
+
+- name: Validate user sudo declarations
+  ansible.builtin.assert:
+    that:
+      - entity.sudo.nopasswd | default(false) or (entity.sudo.macros | default([])) | length > 0
+      - (entity.sudo.macros | default([])) is subset(user_sudo_macros.keys())
+    fail_msg: "user '{{ entity.name }}' declares sudo.macros that are empty or not defined in user_sudo_macros"
+    quiet: true
+  loop: "{{ user_present }}"
+  when: entity.sudo is defined
+  loop_control:
+    label: "{{ entity.name }}"
+    loop_var: entity
+
+- name: Render shared sudo Cmnd_Alias macros file
+  ansible.builtin.copy:
+    dest: "{{ user_sudo_macros_file }}"
+    content: |
+      # Managed by odem.os.user — shared Cmnd_Alias macros.
+      # Per-user sudoers files reference these aliases by name.
+      {% for macro, commands in user_sudo_macros.items() %}
+      Cmnd_Alias {{ macro }} = {{ commands | join(', ') }}
+      {% endfor %}
+    owner: root
+    group: root
+    mode: "0440"
+    validate: visudo -cf %s
+
+- name: Manage per-user sudoers rules referencing shared macros
+  ansible.builtin.copy:
+    dest: "/etc/sudoers.d/{{ entity.name | replace('.', '_') | replace('~', '_') }}"
+    content: "{{ user_sudo_rule }}\n"
+    owner: root
+    group: root
+    mode: "0440"
+    validate: visudo -cf %s
+  vars:
+    user_sudo_rule: >-
+      {{ entity.name }} ALL=(ALL) {{ 'NOPASSWD: ALL'
+        if (entity.sudo.nopasswd | default(false))
+        else (entity.sudo.macros | default([]) | join(', ')) }}
+  when: entity.sudo is defined
+  loop: "{{ user_present }}"
+  loop_control:
+    label: "{{ entity.name }}"
+    loop_var: entity
+
+- name: Add users to admin group when requested
+  ansible.builtin.user:
+    name: "{{ entity.name }}"
+    groups: "{{ 'wheel' if ansible_facts['os_family'] == 'RedHat' else 'sudo' }}"
+    append: true
+  loop: "{{ user_present }}"
+  when: entity.sudo.group | default(false)
+  loop_control:
+    loop_var: entity
+    label: "{{ entity.name }}"
+
+- name: Remove users from admin group when not requested
+  ansible.builtin.command:
+    cmd: "gpasswd -d {{ entity.name }} {{ 'wheel' if ansible_facts['os_family'] == 'RedHat' else 'sudo' }}"
+  register: user_sudo_group_remove
+  changed_when: user_sudo_group_remove.rc == 0
+  failed_when:
+    - user_sudo_group_remove.rc != 0
+    - '"is not a member of" not in user_sudo_group_remove.stderr | default("")'
+  loop: "{{ user_present }}"
+  when:
+    - entity.sudo.group is defined
+    - not (entity.sudo.group | default(false))
+  loop_control:
+    loop_var: entity
+    label: "{{ entity.name }}"
+
+- name: Remove per-user sudoers files
+  ansible.builtin.file:
+    path: "/etc/sudoers.d/{{ item.name | replace('.', '_') | replace('~', '_') }}"
+    state: absent
+  loop: "{{ user_absent }}"
+  loop_control:
+    label: "{{ item.name }}"

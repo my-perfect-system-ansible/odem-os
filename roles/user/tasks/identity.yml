@@ -1,0 +1,51 @@
+---
+# Identity resolve protocol — the single source of truth for per-user roles.
+#
+#   1. Validates that each entry in user_list has a matching user_catalog entry
+#   2. Resolves users into a unified structure: user_resolved
+#   3. Splits into present/absent lists
+#   4. Extracts per-user group names into a flat, deduplicated list
+#
+# Each consuming role then filters user_resolved by its own
+# user_roles.<key> flag (e.g. terminal_bash, desktop_qtile) inline in its
+# task loops — no per-role resolve.yml needed.
+#
+# Data-shaping logic lives in plugins/filter/ of this collection (one filter
+# per file: odem_resolve_users.py, odem_user_groups.py; odem_filter_users.py
+# is the per-user-role opt-in filter used by leaf collections).
+#
+# Outputs:
+#   user_resolved    — list of dicts, one per user_list entry:
+#     - id:          catalog key
+#     - name:        OS username (catalog_entry.name or id)
+#     - state:       "present" or "absent"
+#     - user_roles:  dict from catalog entry (default {})
+#     - ...all other fields from the catalog entry are preserved
+#   user_present      — user_resolved filtered to state == 'present'
+#   user_absent       — user_resolved filtered to state == 'absent'
+#   user_group_names   — flat, deduplicated list of all group names referenced
+#                       by present users (from their `group` and `groups` fields)
+
+- name: Validate user_catalog references
+  ansible.builtin.assert:
+    that:
+      - "item.name in user_catalog"
+    quiet: true
+    fail_msg: "user '{{ item.name }}' in user_list has no entry in user_catalog"
+  loop: "{{ user_list }}"
+  loop_control:
+    label: "{{ item.name }}"
+  when: item.state | default('present') == 'present'
+
+- name: Resolve users from catalog
+  ansible.builtin.set_fact:
+    user_resolved: "{{ user_list | odem.os.odem_resolve_users(user_catalog) }}"
+
+- name: Split users into present and absent lists
+  ansible.builtin.set_fact:
+    user_present: "{{ user_resolved | selectattr('state', 'equalto', 'present') | list }}"
+    user_absent: "{{ user_resolved | selectattr('state', 'equalto', 'absent') | list }}"
+
+- name: Extract group names from present users
+  ansible.builtin.set_fact:
+    user_group_names: "{{ user_present | odem.os.odem_user_groups }}"

@@ -1,0 +1,25 @@
+---
+# Groups — explicit user_groups_list entries (dict or plain name, state
+# defaults to present) plus the groups referenced by present users
+# (user_group_names, gated by user_enable_group_extraction).
+# No add/del/facts split: the group module handles both states per entry,
+# and the extracted-from-users set is always ensure-present.
+
+- name: Manage explicit groups
+  ansible.builtin.group:
+    name: "{{ item.name | default(item) }}"
+    gid: "{{ item.gid | default(omit) }}"
+    system: "{{ item.system | default(omit) }}"
+    state: "{{ item.state | default('present') }}"
+  loop: "{{ user_groups_list }}"
+  loop_control:
+    label: "{{ item.name | default(item) }}"
+
+- name: Ensure groups referenced by present users
+  ansible.builtin.group:
+    name: "{{ item }}"
+    state: present
+  when: user_enable_group_extraction | bool
+  loop: "{{ user_group_names }}"
+  loop_control:
+    label: "{{ item }}"

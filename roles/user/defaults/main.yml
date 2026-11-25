@@ -1,0 +1,258 @@
+---
+# ---------------------------------------------------------------------------
+# Feature toggles — naming pattern: user_enable_<feature>
+# ---------------------------------------------------------------------------
+user_enable_group_folders: true
+
+# Extract each present user's `group` and `groups` fields into the
+# ensure-present group set (former groups role behavior).
+user_enable_group_extraction: true
+
+# Print passwords being generated in plain text to stdout (debug only).
+user_enable_print_passwords_plaintext: false
+
+# ---------------------------------------------------------------------------
+# Ecosystem-wide global defaults — merged from the former odem.base.identity
+# ---------------------------------------------------------------------------
+#
+# Every per-user odem.* role depends on this role (directly or
+# transitively), so these variables are available to all dependent roles
+# across every collection. Collection-level `defaults/main.yml` files are
+# NOT loaded by Ansible — shared globals must live here in a role, not at
+# the collection root.
+user_default_repo_dir: "/srv/repo"
+user_default_repo_dir_mps: "/srv/repo/github/my-perfect-system/mps"
+user_default_file_mode: "0600"
+user_default_dir_mode: "0700"
+user_default_script_mode: "0700"
+user_default_owner: "root"
+user_default_group: "root"
+user_default_suid_mode: "2770"
+
+# ---------------------------------------------------------------------------
+# Shared group folders — collaborative paths for admin / config users
+# ---------------------------------------------------------------------------
+# Each entry creates a directory owned by user_default_owner (root) with
+# the entry's group and the setgid bit, so that new subfolders inherit the
+# group. Members of the folder group can work inside the tree. Referenced
+# groups are ensured present.
+#
+# Note: setgid inherits the *group* only; group-write on new *files* depends
+# on the creating user's umask (002).
+#
+# Example:
+# user_group_folders:
+#   - path: /srv/share
+#     group: config
+#   - path: /srv/repo/github
+#     group: admin
+#     mode: "2775"            # optional per-entry mode override
+user_group_folders: []
+user_group_folders_mode: "{{ user_default_suid_mode }}"
+
+# ---------------------------------------------------------------------------
+# Shared identity model — consumed by all per-user roles across odem.* ecosystem
+# ---------------------------------------------------------------------------
+#
+# user_catalog: dict keyed by a free-form unique id, holding all identity
+#   fields per user (name, uid, group, shell, home, password, ssh_keys, sudo,
+#   user_roles, ...). The real OS username is taken from each entry's `name`
+#   field (defaulting to the catalog key when omitted). One entry per user.
+#
+# user_list: per-host/per-group list of {name, state} pairs referencing
+#   user_catalog entries by their unique id. No overrides. If a user needs
+#   different settings on a host, create a separate catalog entry with a
+#   different id.
+#
+# Each entry may also carry a `user_roles` dict (sourced from the catalog
+#   entry) — e.g. `terminal_bash: true`, `desktop_qtile: true`. Per-user roles
+#   opt in to a user via these flags.
+#
+# ---------------------------------------------------------------------------
+# Per-user field defaults — referenced inside catalog entries below
+# ---------------------------------------------------------------------------
+user_shell: /bin/bash
+user_create_home: true
+user_system: false
+user_expires: -1
+user_groups: []
+user_default_admin_group: "admin"
+user_default_config_group: "config"
+user_admin_groups: ["{{ user_default_admin_group }}", "{{ user_default_config_group }}" ]
+user_append_groups: true
+user_password: "changeme"
+
+# ---------------------------------------------------------------------------
+# user_roles_default — global default per-user role set
+# ---------------------------------------------------------------------------
+# user_roles_default:
+#   terminal_bash: true
+#   terminal_vim: true
+#   terminal_nvim: true
+#   terminal_tmux: true
+#   terminal_kitty: true
+#   terminal_python: true
+#   terminal_rust: true
+#   terminal_scripts: true
+#   desktop_essentials: true
+#   desktop_wm: true
+#   desktop_rofi: true
+#   desktop_qtile: true
+#   desktop_thunar: true
+#   desktop_kanata: true
+#   backup_backup: true
+#   development_opencode: true
+#   development_lmstudio: true
+#   development_espidf: true
+#   development_dotnet: true
+#   development_java: true
+#   development_latex: true
+# #   development_unity: true
+#   development_pi: true
+#
+# user_roles_minimal:
+#   terminal_bash: true
+#   terminal_vim: true
+user_roles_default: []
+user_roles_minimal: []
+
+
+# ---------------------------------------------------------------------------
+# user_catalog — identity catalog (empty by default, override per host)
+# ---------------------------------------------------------------------------
+# Example shape:
+#
+# user_catalog:
+#   default_root:
+#     name: "root"
+#     comment: "root"
+#     password: "rootpass"
+#     home: /root/
+#     group: "root"
+#     groups: "{{ user_groups }}"
+#     system: true
+#     shell: "{{ user_shell }}"
+#     create_home: "{{ user_create_home }}"
+#     expires: "{{ user_expires }}"
+#     append_groups: "{{ user_append_groups }}"
+#     user_roles: "{{ user_roles_default }}"
+#
+#   deploy:
+#     name: "deploy"
+#     comment: "deploy"
+#     password: "deploypass"
+#     group: "deploy"
+#     groups: "{{ user_admin_groups }}"
+#     home: /home/deploy
+#     system: "{{ user_system }}"
+#     shell: "{{ user_shell }}"
+#     create_home: "{{ user_create_home }}"
+#     expires: "{{ user_expires }}"
+#     append_groups: "{{ user_append_groups }}"
+#     sudo:
+#       nopasswd: true
+#       group: true
+#     user_roles: "{{ user_roles_minimal }}"
+#
+#   user1:
+#     name: "user1"
+#     comment: "user1"
+#     password: "user1pass"
+#     group: "user1"
+#     groups: "{{ user_admin_groups }}"
+#     home: /home/user1
+#     system: "{{ user_system }}"
+#     shell: "{{ user_shell }}"
+#     create_home: "{{ user_create_home }}"
+#     expires: "{{ user_expires }}"
+#     append_groups: "{{ user_append_groups }}"
+#     sudo:
+#       nopasswd: false
+#       group: true
+#       macros:
+#         - ADMIN_DEFAULT
+#         - ADMIN_DEBUG
+#     user_roles: "{{ user_roles_default }}"
+user_catalog: {}
+
+# ---------------------------------------------------------------------------
+# user_list — per-host/per-group assignment list (empty by default)
+# ---------------------------------------------------------------------------
+# Example shape:
+#
+# user_list:
+#   - name: default_root
+#     state: present
+#   - name: user1
+#     state: present
+#   - name: deploy
+#     state: present
+#   - name: old_user
+#     state: absent
+user_list: []
+
+# ---------------------------------------------------------------------------
+# Explicit group management — merged from the former groups role
+# ---------------------------------------------------------------------------
+# Explicit groups list. Each entry is a dict:
+#   name:    str (required)
+#   state:   str (present|absent, default present)
+#   gid:     int (optional)
+#   system:  bool (optional)
+#
+# Merged with the groups extracted from present users when
+# user_enable_group_extraction is true.
+user_groups_list: []
+
+# ---------------------------------------------------------------------------
+# Sudoers macros — merged from the former sudo role
+# ---------------------------------------------------------------------------
+# Mapping of Cmnd_Alias names to lists of command patterns rendered into
+# the shared macros file (user_sudo_macros_file, default
+# /etc/sudoers.d/00_macros). Per-user sudoers files reference the aliases
+# by name instead of expanding the command lists inline.
+user_sudo_macros:
+  ADMIN_DEFAULT:
+    - "/usr/bin/apt"
+    - "/usr/bin/systemctl"
+    - "/usr/bin/journalctl *"
+    - "/usr/bin/df *"
+    - "/usr/bin/du *"
+    - "/usr/sbin/lsblk *"
+    - "/usr/bin/netstat *"
+    - "/usr/bin/which *"
+    - "/usr/bin/cat /etc/hosts"
+    - "/usr/bin/cat /etc/resolv.conf"
+    - "/usr/bin/cat /etc/network/interfaces"
+    - "/usr/sbin/route -n"
+    - "/usr/sbin/iptables -L *"
+    - "/usr/sbin/brctl show *"
+    - "/usr/sbin/poweroff"
+    - "/usr/sbin/reboot"
+  ADMIN_DEBUG:
+    - "/bin/sh *"
+    - "/bin/bash *"
+    - "/usr/bin/apt *"
+    - "/usr/lib/apt/methods/http *"
+    - "/usr/bin/rsync *"
+    - "/usr/bin/cp *"
+    - "/usr/bin/rm *"
+    - "/usr/bin/mv *"
+    - "/usr/bin/ln *"
+    - "/usr/bin/mount *"
+    - "/usr/bin/umount *"
+    - "/usr/bin/tee *"
+    - "/usr/bin/batcat *"
+    - "/usr/bin/cat *"
+    - "/usr/bin/vi *"
+    - "/usr/bin/vim *"
+    - "/usr/bin/nano *"
+    - "/usr/sbin/route *"
+    - "/usr/sbin/iptables *"
+    - "/usr/sbin/brctl *"
+  ADMIN_MINIMAL:
+    - "/usr/bin/su -"
+
+# Shared macros file — every Cmnd_Alias from user_sudo_macros is rendered here.
+# Per-user sudoers files only reference the alias names.
+user_sudo_macros_file: "/etc/sudoers.d/00_macros"

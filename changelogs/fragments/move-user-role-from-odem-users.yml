@@ -1,0 +1,6 @@
+---
+minor_changes:
+  - move the merged user role (former odem.users.user) and the odem_filter_users / odem_resolve_users / odem_user_groups filter plugins here from the deleted odem.users collection; fully-qualified filter references change from odem.users.odem_* to odem.os.odem_*
+  - drop the odem.users Galaxy dependency; the collection is now ansible.posix only
+breaking_changes:
+  - odem.os.user replaces odem.users.user — every per-user role in the other collections now declares odem.os.user as its meta dependency and odem.os as the Galaxy dependency

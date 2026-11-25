@@ -1,0 +1,27 @@
+---
+# Shared group folders — each configured path is created with root ownership,
+# the entry's group, and the setgid bit (default mode 2770) so that new
+# subfolders inherit the group. Members of the folder group (e.g. admin /
+# config users) can collaborate in these trees.
+#
+# Note: setgid inheritance covers the *group* of new subfolders. Group-write
+# on new *files* additionally depends on the creating user's umask (002).
+
+- name: Ensure shared folder groups exist
+  ansible.builtin.group:
+    name: "{{ item }}"
+    state: present
+  loop: "{{ user_group_folders | map(attribute='group') | unique | list }}"
+  loop_control:
+    label: "{{ item }}"
+
+- name: Create shared group folders with setgid inheritance
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    state: directory
+    owner: "{{ user_default_owner }}"
+    group: "{{ item.group }}"
+    mode: "{{ item.mode | default(user_group_folders_mode) }}"
+  loop: "{{ user_group_folders }}"
+  loop_control:
+    label: "{{ item.path }}"
