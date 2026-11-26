@@ -1,0 +1,6 @@
+---
+minor_changes:
+  - merge the single-role odem.backup collection into odem.os as the odem.os.backup role - per-user restore loop (ssh keys, config, authorized_keys, brave bookmarks, home directory) with the backup_* variable prefix unchanged
+  - rename the identity opt-in key backup_backup to os_backup (user_roles.os_backup in the user catalog entries)
+breaking_changes:
+  - odem.os.backup replaces odem.backup.backup - playbook role lines rename accordingly; the odem-backup repository was deleted

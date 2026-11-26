@@ -1,18 +1,18 @@
 ---
 namespace: odem
 name: os
-version: 0.5.0
+version: 0.6.0
 readme: README.md
 authors:
   - foo <bar@baz.com>
-description: Operating system init, per-user identity model, and system tweaks — package management, system settings, core tools, users, groups, SSH keys, sudoers, zram, tmpfs ramdisks, kmscon
+description: Operating system init, per-user identity model, system tweaks, and per-user backup restore — package management, system settings, core tools, users, groups, SSH keys, sudoers, zram, tmpfs ramdisks, kmscon, SSH/config/bookmarks/home restore
 license:
   - GPL-3.0-or-later
 tags:
   - linux
   - os
-  - infrastructure
-  - odem
+  - backup
+  - restore
 repository: https://github.com/my-perfect-system/odem-os
 documentation: https://github.com/my-perfect-system/odem-os
 homepage: https://github.com/my-perfect-system/odem-os

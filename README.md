@@ -3,14 +3,15 @@
 Operating system init + the shared per-user identity model + system tweaks for
 Debian 13 (trixie) and Fedora 45: package sources, unattended upgrades,
 locale / keyboard / console / timezone, core CLI tooling — plus users, groups,
-SSH keys, sudoers, group folders (the merged `odem.os.user` role), and zram /
-tmpfs ramdisks / kmscon (the merged `odem.os.tweaks` role).
+SSH keys, sudoers, group folders (the merged `odem.os.user` role), zram /
+tmpfs ramdisks / kmscon (the merged `odem.os.tweaks` role), and per-user
+backup restore (the merged `odem.os.backup` role).
 
 ## Galaxy metadata
 
 - **namespace**: `odem`
 - **name**: `os`
-- **version**: `0.5.0`
+- **version**: `0.6.0`
 - **dependencies**: `ansible.posix`
 
 See [`galaxy.yml`](galaxy.yml) for the canonical values.
@@ -19,6 +20,7 @@ See [`galaxy.yml`](galaxy.yml) for the canonical values.
 
 | Role | Purpose |
 |---|---|
+| [`odem.os.backup`](roles/backup/README.md) | Per-user restore — SSH keys/config/authorized_keys, Brave bookmarks (gated by `backup_enable_persist_brave`), home directory; conservative `synchronize`, `delete: false`. Merged from the deleted `odem.backup` collection. |
 | [`odem.os.packages`](roles/packages/README.md) | Configure APT sources (4 pockets × components × deb-src), install base packages, configure unattended-upgrades. |
 | [`odem.os.settings`](roles/settings/README.md) | Configure hostname + `/etc/hosts` (custom entries), locale, keyboard, console, timezone — one tasks file per concern, plus a `tools.yml` sub-step (install/remove packages + static `/etc/resolv.conf` nameserver). |
 | [`odem.os.tools`](roles/tools/README.md) | Apt-by-category groups for archives, build, file-manager, network, transfer, statistics tools. Per-area toggles. |

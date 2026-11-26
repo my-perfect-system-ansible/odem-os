@@ -3,19 +3,20 @@
 Operating system init + the shared per-user identity model for Debian 13
 (trixie) and Fedora 45: package sources, unattended upgrades, locale /
 keyboard / console / timezone, core CLI tooling, users, groups, SSH keys,
-sudoers.
+sudoers, and per-user backup restore (the merged `odem.os.backup` role).
 
 ## Galaxy
 
 - **namespace**: `odem`
 - **name**: `os`
-- **version**: `0.5.0`
+- **version**: `0.6.0`
 - **dependencies**: `ansible.posix >=1.0.0`
 
 ## Roles
 
 | Role | Description | Complexity |
 |---|---|---|
+| `odem.os.backup` | Per-user restore loop (iterates `user_present`): creates `~/.ssh/`, restores SSH private keys / config / authorized_keys from `backup_ssh_source`, Brave bookmarks gated by `backup_enable_persist_brave`, home directory from `backup_source`, fixes permissions to 0700 (recurse). Conservative `synchronize` with `delete: false`. Merged from the deleted `odem.backup` collection (2026-11). | 2 |
 | `odem.os.packages` | Configure `/etc/apt/sources.list` (4 pockets × components × deb-src), install base apt packages, configure unattended-upgrades. | 2 |
 | `odem.os.settings` | Configure hostname + `/etc/hosts` (custom entries), locale, keyboard, console (kmscon / plymouth), timezone / chrony, and a `tools.yml` sub-step (install/remove packages + static `/etc/resolv.conf` nameserver). One sub-file per concern. | 2 |
 | `odem.os.tools` | Apt-by-category groups (archives, build, core, file-manager, network, transfer, statistics). Each gated by a `tools_enable_<area>` toggle. | 1 |
