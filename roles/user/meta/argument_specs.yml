@@ -169,8 +169,8 @@ argument_specs:
           state:
             type: str
             choices:
-            - present
-            - absent
+              - present
+              - absent
             default: present
             description: Whether the group should exist.
           gid:

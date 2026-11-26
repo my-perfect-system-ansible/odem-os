@@ -1,27 +1,22 @@
 ---
 # odem.os.user — merged per-user role. Orchestrator.
 #
-#   0. Fails fast if the target host is not a supported platform family
-#   1. identity.yml  — validates user_list against user_catalog and resolves
-#      the user_resolved / user_present / user_absent / user_group_names facts
-#   2. folders.yml    — shared group folders with setgid group inheritance
+#   0. identity.yml  — asserts the platform family, validates user_list
+#      against user_catalog, and resolves the user_resolved / user_present /
+#      user_absent / user_group_names facts
+#   1. folders.yml    — shared group folders with setgid group inheritance
 #      (opt-in via user_enable_group_folders + user_group_folders)
-#   3. groups.yml     — explicit user_groups_list + groups extracted from users
-#   4. users.yml      — create present / remove absent accounts (root special path)
-#   5. ssh.yml        — per-user ~/.ssh, private keys, authorized_keys
-#   6. sudo.yml       — shared Cmnd_Alias macros + per-user sudoers files
+#   2. groups.yml     — explicit user_groups_list + groups extracted from users
+#   3. users.yml      — create present / remove absent accounts (root special path)
+#   4. ssh.yml        — per-user ~/.ssh, private keys, authorized_keys
+#   5. sudo.yml       — shared Cmnd_Alias macros + per-user sudoers files
 #
 # Per-user roles in other collections do NOT meta-depend on this role.
 # Each consuming role resolves identity lazily via a guarded include_role of
 # identity.yml (public: true) as its first task; this role manages accounts
-# only where it is applied explicitly (e.g. the bootstrap playbook).
-
-- name: Assert supported target platform
-  ansible.builtin.assert:
-    that:
-      - ansible_facts['os_family'] in ['Debian', 'RedHat']
-    fail_msg: "This role supports Debian and RedHat family distributions only"
-    quiet: true
+# only where it is applied explicitly (e.g. the bootstrap playbook). The
+# platform assert lives in identity.yml, so it fires wherever identity is
+# resolved — bootstrap and every guarded play.
 
 - name: Resolve identity users protocol
   ansible.builtin.include_tasks: identity.yml

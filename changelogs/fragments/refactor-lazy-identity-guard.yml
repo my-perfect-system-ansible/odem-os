@@ -1,0 +1,18 @@
+---
+# Fragment for the lazy identity guard refactor (2026-11-26).
+# Compiles into changelogs/changelog.yaml at release time.
+minor_changes:
+  - |
+    `backup` no longer meta-depends on `odem.os.user`: it resolves the identity
+    facts lazily via a first-task `include_role {name: odem.os.user,
+    tasks_from: identity.yml, public: true}` guard, gated on `user_resolved` or
+    `user_default_repo_dir_mps` being undefined. `settings`, `packages` and
+    `tools` drop the meta dependency outright — none of them consume identity
+    data. Consequence: account management (groups/users/ssh/sudo/folders) now
+    only runs where `odem.os.user` is applied explicitly, e.g. the bootstrap
+    playbook; fresh hosts must be bootstrapped before any per-user role.
+  - |
+    The supported-platform assert moved from `user/tasks/main.yml` to
+    `user/tasks/identity.yml`, so it fires wherever identity is resolved — in
+    `odem.os.user` itself and in every consuming role's lazy guard — instead of
+    only where the role is applied explicitly.

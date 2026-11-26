@@ -26,6 +26,13 @@
 #   user_group_names   — flat, deduplicated list of all group names referenced
 #                       by present users (from their `group` and `groups` fields)
 
+- name: Assert supported target platform
+  ansible.builtin.assert:
+    that:
+      - ansible_facts['os_family'] in ['Debian', 'RedHat']
+    fail_msg: "This role supports Debian and RedHat family distributions only"
+    quiet: true
+
 - name: Validate user_catalog references
   ansible.builtin.assert:
     that:
