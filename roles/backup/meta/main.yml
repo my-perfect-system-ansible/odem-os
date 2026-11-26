@@ -18,5 +18,4 @@ galaxy_info:
     - backup
     - restore
     - odem-os
-dependencies:
-  - role: odem.os.user
+dependencies: []

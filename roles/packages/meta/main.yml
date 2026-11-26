@@ -20,5 +20,4 @@ galaxy_info:
     - fedora
     - odem-debian
     - odem-fedora
-dependencies:
-  - role: odem.os.user
+dependencies: []

@@ -11,8 +11,10 @@
 #   5. ssh.yml        — per-user ~/.ssh, private keys, authorized_keys
 #   6. sudo.yml       — shared Cmnd_Alias macros + per-user sudoers files
 #
-# Per-user roles in other collections depend on this role; they filter
-# user_resolved by their own user_roles.<key> flag inline.
+# Per-user roles in other collections do NOT meta-depend on this role.
+# Each consuming role resolves identity lazily via a guarded include_role of
+# identity.yml (public: true) as its first task; this role manages accounts
+# only where it is applied explicitly (e.g. the bootstrap playbook).
 
 - name: Assert supported target platform
   ansible.builtin.assert:

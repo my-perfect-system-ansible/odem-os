@@ -15,11 +15,11 @@ user_enable_print_passwords_plaintext: false
 # Ecosystem-wide global defaults — merged from the former odem.base.identity
 # ---------------------------------------------------------------------------
 #
-# Every per-user odem.* role depends on this role (directly or
-# transitively), so these variables are available to all dependent roles
-# across every collection. Collection-level `defaults/main.yml` files are
-# NOT loaded by Ansible — shared globals must live here in a role, not at
-# the collection root.
+# Per-user odem.* roles load these globals via the lazy identity guard
+# (include_role of this role, public: true) — the guard re-runs per play, so
+# the defaults stay available in every play that applies a per-user role.
+# Collection-level `defaults/main.yml` files are NOT loaded by Ansible —
+# shared globals must live here in a role, not at the collection root.
 user_default_repo_dir: "/srv/repo"
 user_default_repo_dir_mps: "/srv/repo/github/my-perfect-system/mps"
 user_default_file_mode: "0600"
